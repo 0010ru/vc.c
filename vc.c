@@ -36,10 +36,11 @@ typedef struct {
     VC_WindowParams *params;
 } VC_Window;
 
+typedef void (*VC_F_HandleEvent)(VC_Window *window, VC_EventType event_type);
+
 VC_Window vc_create_window(VC_WindowParams *params);
-void vc_handle_event(VC_Window *window, VC_EventType event_type);
 VC_EventType vc_get_next_event(VC_Window *window);
-void vc_run_event_loop(VC_Window *window);
+void vc_run_event_loop(VC_Window *window, VC_F_HandleEvent vc_handle_event);
 void vc_window_destroy(VC_Window *window);
 
 #endif // VC_C
@@ -136,25 +137,12 @@ void vc_window_destroy_x11(VC_Window *window) {
     }
 }
 
-void vc_handle_event_expose(VC_Window *window) {
-    XClearWindow(window->display->native_display, window->native_window);
-}
-
-void vc_handle_event(VC_Window *window, VC_EventType event_type) {
-    switch (event_type) {
-        case VC_EVENT_EXPOSE:
-            vc_handle_event_expose(window);
-            break;
-        default:
-            break;
-    }
-}
 
 VC_EventType vc_get_next_event(VC_Window *window) {
     return vc_get_next_event_x11(window->display);
 }
 
-void vc_run_event_loop(VC_Window *window) {
+void vc_run_event_loop(VC_Window *window, VC_F_HandleEvent vc_handle_event) {
     int running = 1;
     while (running) {
         VC_EventType event_type = vc_get_next_event(window); 
@@ -176,10 +164,30 @@ void vc_window_destroy(VC_Window *window) {
 // ------------------------------------
 
 #if 1
+
+
+void vc_handle_event(VC_Window *window, VC_EventType event_type) {
+    (void) window;
+
+    switch (event_type) {
+        case VC_EVENT_EXPOSE:
+            break;
+        
+        case VC_EVENT_KEY_PRESS:
+            break;
+
+        case VC_EVENT_UNKNOWN:
+            break;
+
+        default:
+            break;
+    }
+}
+
 int main() {
     VC_WindowParams params = {"My X11 Window", 800, 600};
         VC_Window window = vc_create_window(&params);
-            vc_run_event_loop(&window);
+            vc_run_event_loop(&window, vc_handle_event);
         vc_window_destroy(&window);
     return 0;
 }
