@@ -51,15 +51,15 @@ void *vc_region_get_data(VC_Region *region);
 
 // --- System Allocator (for internal use) ---
 
-void *vc_malloc_linux(size_t size) {
+void *vc_malloc_libc(size_t size) {
     return malloc(size);
 }
 
-void *vc_realloc_linux(void *ptr, size_t size) {
+void *vc_realloc_libc(void *ptr, size_t size) {
     return realloc(ptr, size);
 }
 
-void vc_free_linux(void *ptr) {
+void vc_free_libc(void *ptr) {
     free(ptr);
 }
 
@@ -67,20 +67,20 @@ void vc_free_linux(void *ptr) {
 
 void vc_free(void *ptr) {
     if (ptr != NULL) {
-        vc_free_linux(ptr);
+        vc_free_libc(ptr);
     }
 }
 
 // --- Arena Creation ---
 
 VC_Arena *vc_arena_create(size_t initial_capacity) {
-    VC_Arena *arena = (VC_Arena *)vc_malloc_linux(sizeof(VC_Arena));
+    VC_Arena *arena = (VC_Arena *)vc_malloc_libc(sizeof(VC_Arena));
     if (arena == NULL) {
         fprintf(stderr, "ERROR: Failed to allocate memory for arena!\n");
         exit(EXIT_FAILURE);
     }
 
-    arena->memory = vc_malloc_linux(initial_capacity);
+    arena->memory = vc_malloc_libc(initial_capacity);
     if (arena->memory == NULL) {
         fprintf(stderr, "ERROR: Failed to allocate memory for arena!\n");
         vc_free(arena);
@@ -90,7 +90,7 @@ VC_Arena *vc_arena_create(size_t initial_capacity) {
     arena->used = 0;
     arena->capacity = initial_capacity;
 
-    VC_FreeBlock *block = (VC_FreeBlock *)vc_malloc_linux(sizeof(VC_FreeBlock));
+    VC_FreeBlock *block = (VC_FreeBlock *)vc_malloc_libc(sizeof(VC_FreeBlock));
     if (block == NULL) {
         fprintf(stderr, "ERROR: Failed to allocate memory for FreeBlock!\n");
         vc_free(arena->memory);
@@ -131,7 +131,7 @@ void vc_grow_arena(VC_Arena *arena, size_t size) {
         new_capacity = arena->used + size;
     }
 
-    void *new_memory = vc_realloc_linux(arena->memory, new_capacity);
+    void *new_memory = vc_realloc_libc(arena->memory, new_capacity);
     if (new_memory == NULL) {
         fprintf(stderr, "ERROR: Failed to reallocate memory for arena!\n");
         exit(EXIT_FAILURE);
@@ -204,7 +204,7 @@ void *vc_m_free(VC_Arena *arena, void *ptr) {
     size_t offset = (char *)ptr - (char *)arena->memory;
 
     if (offset < arena->used) {
-        VC_FreeBlock *block = (VC_FreeBlock *)vc_malloc_linux(sizeof(VC_FreeBlock));
+        VC_FreeBlock *block = (VC_FreeBlock *)vc_malloc_libc(sizeof(VC_FreeBlock));
         if (block == NULL) {
             fprintf(stderr, "ERROR: Failed to allocate memory for FreeBlock!\n");
             exit(1);
