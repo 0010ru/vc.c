@@ -23,13 +23,16 @@ typedef struct {
     uint16_t height;
 } VC_WindowParams;
 
+typedef Display NativeDisplay;
+typedef Window NativeWindow;
+
 typedef struct {
-    Display *x11_display;
+    NativeDisplay *native_display;
 } VC_Display;
 
 typedef struct {
     VC_Display *display;
-    Window x11_window;
+    NativeWindow native_window;
     VC_WindowParams *params;
 } VC_Window;
 
@@ -51,55 +54,55 @@ void vc_window_destroy(VC_Window *window);
 #include <stdio.h>
 #include <stdlib.h>
 
-Display *vc_create_x11_display(void) {
-    Display *x_display = XOpenDisplay(NULL);
-    if (x_display == NULL) {
+NativeDisplay *vc_create_native_display(void) {
+    NativeDisplay *native_display = XOpenDisplay(NULL);
+    if (native_display == NULL) {
         fprintf(stderr, "ERROR: Cannot open X11 display!\n");
         exit(EXIT_FAILURE);
     }
-    return x_display;
+    return native_display;
 }
 
-void setup_x11_window(Display *x_display, Window *x_window, VC_WindowParams *params) {
-    XStoreName(x_display, *x_window, params->name);
-    XSelectInput(x_display, *x_window, ExposureMask | KeyPressMask);
-    XMapWindow(x_display, *x_window);
+void setup_native_window(NativeDisplay *native_display, NativeWindow *native_window , VC_WindowParams *params) {
+    XStoreName(native_display, *native_window , params->name);
+    XSelectInput(native_display, *native_window , ExposureMask | KeyPressMask);
+    XMapWindow(native_display, *native_window );
 }
 
-Window *vc_create_x11_window(Display *x_display, VC_WindowParams *params) {
-    Window *x_window = (Window*)malloc(sizeof(Window)); // TODO: memory managment
+Window *vc_create_native_window(NativeDisplay *native_display, VC_WindowParams *params) {
+    NativeWindow *native_window  = (Window*)malloc(sizeof(Window)); // TODO: memory managment
     
-    int screen = DefaultScreen(x_display);
-    uint64_t black = BlackPixel(x_display, screen);
-    uint64_t white = WhitePixel(x_display, screen);
-    Window root_x_window = RootWindow(x_display, screen);
-    *x_window = XCreateSimpleWindow(
-        x_display, // display
-        root_x_window, // parent
+    int screen = DefaultScreen(native_display);
+    uint64_t black = BlackPixel(native_display, screen);
+    uint64_t white = WhitePixel(native_display, screen);
+    NativeWindow root_native_window  = RootWindow(native_display, screen);
+    *native_window  = XCreateSimpleWindow(
+        native_display, // display
+        root_native_window , // parent
         100, 100, // x, y
         params->width, params->height, 
         1, // border width
         black, white // border, background
     );
-    if (x_window == NULL) {
+    if (native_window  == NULL) {
         fprintf(stderr, "ERROR: Failed to create X11 window!\n");
-        XCloseDisplay(x_display);
+        XCloseDisplay(native_display);
         exit(EXIT_FAILURE);
     }
 
-    setup_x11_window(x_display, x_window, params);
+    setup_native_window(native_display, native_window , params);
 
-    return x_window;
+    return native_window ;
 }
 
 VC_Window vc_create_window_x11(VC_WindowParams *params) {
-    Display *x_display = vc_create_x11_display();
-    Window *x_window = vc_create_x11_window(x_display, params);
+    NativeDisplay *native_display = vc_create_native_display();
+    NativeWindow *native_window  = vc_create_native_window(native_display, params);
 
     VC_Display* display = (VC_Display*)malloc(sizeof(VC_Display));  // TODO: memory managment
-    display->x11_display = x_display;
+    display->native_display = native_display;
 
-    return (VC_Window) {display, *x_window, params};
+    return (VC_Window) {display, *native_window , params};
 }
 
 
@@ -120,21 +123,21 @@ VC_EventType vc_map_x11_event(XEvent event) {
 
 VC_EventType vc_get_next_event_x11(VC_Display *display) {
     XEvent xevent;
-    XNextEvent(display->x11_display, &xevent);
+    XNextEvent(display->native_display, &xevent);
     return vc_map_x11_event(xevent);
 }
 
 void vc_window_destroy_x11(VC_Window *window) {
     if (window->display != NULL) {
-        if (window->x11_window != 0) {
-            XDestroyWindow(window->display->x11_display, window->x11_window);
+        if (window->native_window != 0) {
+            XDestroyWindow(window->display->native_display, window->native_window);
         }
-        XCloseDisplay(window->display->x11_display);
+        XCloseDisplay(window->display->native_display);
     }
 }
 
 void vc_handle_event_expose(VC_Window *window) {
-    XClearWindow(window->display->x11_display, window->x11_window);
+    XClearWindow(window->display->native_display, window->native_window);
 }
 
 void vc_handle_event(VC_Window *window, VC_EventType event_type) {
