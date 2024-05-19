@@ -3,6 +3,7 @@
 #ifndef VC_ARENA_H
 #define VC_ARENA_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #define K1 1024
@@ -32,6 +33,7 @@ void vc_arena_destroy(VC_Arena *arena);
 void *vc_m_alloc(VC_Arena *arena, size_t size);
 void *vc_m_free(VC_Arena *arena, void *ptr);
 void *vc_m_realloc(VC_Arena *arena, void *ptr, size_t new_size);
+void vc_free(void *ptr);
 VC_Region vc_region_create(VC_Arena *arena, size_t size);
 void *vc_region_get_data(VC_Region *region);
 
@@ -57,6 +59,18 @@ void *vc_realloc_linux(void *ptr, size_t size) {
     return realloc(ptr, size);
 }
 
+void vc_free_linux(void *ptr) {
+    free(ptr);
+}
+
+// --- Memory Free ---
+
+void vc_free(void *ptr) {
+    if (ptr != NULL) {
+        vc_free_linux(ptr);
+    }
+}
+
 // --- Arena Creation ---
 
 VC_Arena *vc_arena_create(size_t initial_capacity) {
@@ -69,7 +83,7 @@ VC_Arena *vc_arena_create(size_t initial_capacity) {
     arena->memory = vc_malloc_linux(initial_capacity);
     if (arena->memory == NULL) {
         fprintf(stderr, "ERROR: Failed to allocate memory for arena!\n");
-        free(arena);
+        vc_free(arena);
         exit(EXIT_FAILURE);
     }
 
@@ -79,8 +93,8 @@ VC_Arena *vc_arena_create(size_t initial_capacity) {
     VC_FreeBlock *block = (VC_FreeBlock *)vc_malloc_linux(sizeof(VC_FreeBlock));
     if (block == NULL) {
         fprintf(stderr, "ERROR: Failed to allocate memory for FreeBlock!\n");
-        free(arena->memory);
-        free(arena);
+        vc_free(arena->memory);
+        vc_free(arena);
         exit(EXIT_FAILURE);
     }
 
@@ -99,12 +113,12 @@ void vc_arena_destroy(VC_Arena *arena) {
         VC_FreeBlock *current = (VC_FreeBlock *)arena->free_list;
         while (current != NULL) {
             VC_FreeBlock *next = current->next;
-            free(current);
+            vc_free(current);
             current = next;
         }
 
-        free(arena->memory);
-        free(arena);
+        vc_free(arena->memory);
+        vc_free(arena);
     }
 }
 
@@ -171,7 +185,7 @@ void *vc_m_alloc(VC_Arena *arena, size_t size) {
             } else {
                 arena->free_list = current->next;
             }
-            free(current);
+            vc_free(current);
         }
 
         arena->used += size;
@@ -183,7 +197,8 @@ void *vc_m_alloc(VC_Arena *arena, size_t size) {
 
 void *vc_m_free(VC_Arena *arena, void *ptr) {
     if (ptr < arena->memory || ptr >= (void *)arena->memory + arena->capacity) {
-        return NULL; // Invalid pointer
+        fprintf(stderr, "ERROR: Failed to reallocate memory: Pointer is out of bounds!\n");
+        exit(1);
     }
 
     size_t offset = (char *)ptr - (char *)arena->memory;
@@ -192,7 +207,7 @@ void *vc_m_free(VC_Arena *arena, void *ptr) {
         VC_FreeBlock *block = (VC_FreeBlock *)vc_malloc_linux(sizeof(VC_FreeBlock));
         if (block == NULL) {
             fprintf(stderr, "ERROR: Failed to allocate memory for FreeBlock!\n");
-            return NULL;
+            exit(1);
         }
 
         block->start = ptr;
@@ -210,7 +225,8 @@ void *vc_m_free(VC_Arena *arena, void *ptr) {
 
 void *vc_m_realloc(VC_Arena *arena, void *ptr, size_t new_size) {
     if (ptr < arena->memory || ptr >= (void *)arena->memory + arena->capacity) {
-        return NULL; // Invalid pointer
+        fprintf(stderr, "ERROR: Failed to reallocate memory: Pointer is out of bounds!\n");
+        exit(1);
     }
 
     size_t offset = (char *)ptr - (char *)arena->memory;
