@@ -1,9 +1,18 @@
 #!/bin/sh -xe
 
+NAME=vc
 CC=clang
-CFLAGS="-Wall -Wextra -Werror"
+CFLAGS="-Wall -Wextra -Werror -ggdb -c -fPIC"
+LDFLAGS="-lX11"
+SOURCE_DIR=src
+DESTINATION_DIR=lib
 
-mkdir -p ./dst/
+VCC_C=$SOURCE_DIR/vc.c
+VCC_O=$DESTINATION_DIR/vc.o
+VCM_C=$SOURCE_DIR/vcm.c
+VCM_O=$DESTINATION_DIR/vcm.o
 
-$CC $CFLAGS -c -fPIC -o ./dst/vcc.o ./src/vc.c
-$CC $CFLAGS -c -fPIC -o ./dst/vcm.o ./src/vcm.c
+mkdir -p $DESTINATION_DIR
+$CC $CFLAGS -o $VCC_O $VCC_C
+$CC $CFLAGS -o $VCM_O $VCM_C
+ar rcs $DESTINATION_DIR/lib$NAME.a $VCC_O $VCM_O
