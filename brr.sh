@@ -1,0 +1,16 @@
+#!/bin/sh -xe
+
+CC=clang
+CFLAGS="-Wall -Wextra -Werror"
+CLIBS="-I./src/ -lX11"
+
+NAME=vox
+
+SOURCES_FOLDER="./src"
+SOURCE_MAIN="$SOURCES_FOLDER/main.c"
+SOURCE_IMPL="$SOURCES_FOLDER/vc.c"
+
+SOURCES="$SOURCE_MAIN $SOURCE_IMPL"
+
+$CC $CFLAGS -o ./$NAME $SOURCES $CLIBS && \
+./$NAME
