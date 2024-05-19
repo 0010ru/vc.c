@@ -51,19 +51,29 @@ void vc_window_destroy(VC_Window *window);
 #include <stdio.h>
 #include <stdlib.h>
 
-
-VC_Window vc_create_window(VC_WindowParams *params) {
+Display *vc_create_x11_display(void) {
     Display *x_display = XOpenDisplay(NULL);
     if (x_display == NULL) {
         fprintf(stderr, "ERROR: Cannot open X11 display!\n");
         exit(EXIT_FAILURE);
     }
+    return x_display;
+}
+
+void setup_x11_window(Display *x_display, Window *x_window, VC_WindowParams *params) {
+    XStoreName(x_display, *x_window, params->name);
+    XSelectInput(x_display, *x_window, ExposureMask | KeyPressMask);
+    XMapWindow(x_display, *x_window);
+}
+
+Window *vc_create_x11_window(Display *x_display, VC_WindowParams *params) {
+    Window *x_window = (Window*)malloc(sizeof(Window)); // TODO: memory managment
     
     int screen = DefaultScreen(x_display);
-    unsigned long black = BlackPixel(x_display, screen);
-    unsigned long white = WhitePixel(x_display, screen);
+    uint64_t black = BlackPixel(x_display, screen);
+    uint64_t white = WhitePixel(x_display, screen);
     Window root_x_window = RootWindow(x_display, screen);
-    Window x_window = XCreateSimpleWindow(
+    *x_window = XCreateSimpleWindow(
         x_display, // display
         root_x_window, // parent
         100, 100, // x, y
@@ -71,20 +81,30 @@ VC_Window vc_create_window(VC_WindowParams *params) {
         1, // border width
         black, white // border, background
     );
-
-    if (!x_window) {
+    if (x_window == NULL) {
         fprintf(stderr, "ERROR: Failed to create X11 window!\n");
         XCloseDisplay(x_display);
         exit(EXIT_FAILURE);
     }
 
-    XStoreName(x_display, x_window, params->name);
-    XSelectInput(x_display, x_window, ExposureMask | KeyPressMask);
-    XMapWindow(x_display, x_window);
+    setup_x11_window(x_display, x_window, params);
 
-    VC_Display* display = (VC_Display*)malloc(sizeof(VC_Display));
+    return x_window;
+}
+
+VC_Window vc_create_window_x11(VC_WindowParams *params) {
+    Display *x_display = vc_create_x11_display();
+    Window *x_window = vc_create_x11_window(x_display, params);
+
+    VC_Display* display = (VC_Display*)malloc(sizeof(VC_Display));  // TODO: memory managment
     display->x11_display = x_display;
-    return (VC_Window) {display, x_window, params};
+
+    return (VC_Window) {display, *x_window, params};
+}
+
+
+VC_Window vc_create_window(VC_WindowParams *params) {
+    return vc_create_window_x11(params);
 }
 
 VC_EventType vc_map_x11_event(XEvent event) {
