@@ -33,6 +33,8 @@ void vc_arena_destroy(VC_Arena *arena);
 void *vc_m_alloc(VC_Arena *arena, size_t size);
 void *vc_m_free(VC_Arena *arena, void *ptr);
 void *vc_m_realloc(VC_Arena *arena, void *ptr, size_t new_size);
+void *vc_malloc(size_t size);
+void *vc_realloc(void *ptr, size_t size);
 void vc_free(void *ptr);
 VC_Region vc_region_create(VC_Arena *arena, size_t size);
 void *vc_region_get_data(VC_Region *region);
@@ -55,15 +57,21 @@ void *vc_malloc_libc(size_t size) {
     return malloc(size);
 }
 
+void *vc_malloc(size_t size) {
+    return vc_malloc_libc(size);
+}
+
 void *vc_realloc_libc(void *ptr, size_t size) {
     return realloc(ptr, size);
+}
+
+void *vc_realloc(void *ptr, size_t size) {
+    return vc_realloc_libc(ptr, size);
 }
 
 void vc_free_libc(void *ptr) {
     free(ptr);
 }
-
-// --- Memory Free ---
 
 void vc_free(void *ptr) {
     if (ptr != NULL) {
@@ -131,7 +139,7 @@ void vc_grow_arena(VC_Arena *arena, size_t size) {
         new_capacity = arena->used + size;
     }
 
-    void *new_memory = vc_realloc_libc(arena->memory, new_capacity);
+    void *new_memory = vc_realloc(arena->memory, new_capacity);
     if (new_memory == NULL) {
         fprintf(stderr, "ERROR: Failed to reallocate memory for arena!\n");
         exit(EXIT_FAILURE);
@@ -270,8 +278,8 @@ void *vc_region_get_data(VC_Region *region) {
 
 // --- Public API ---
 
-void *vc_malloc(size_t size);
-void *vc_realloc(void *ptr, size_t size);
+void *vc_ga_malloc(size_t size);
+void *vc_ga_realloc(void *ptr, size_t size);
 
 #endif // VC_GLOBAL_ARENA_H
 
@@ -286,7 +294,7 @@ static VC_Arena *global_arena = NULL;
 
 // --- Global Memory Allocation ---
 
-void *vc_malloc(size_t size) {
+void *vc_ga_malloc(size_t size) {
     if (global_arena == NULL) {
         global_arena = vc_arena_create(16 * K1);
     }
@@ -294,7 +302,7 @@ void *vc_malloc(size_t size) {
     return vc_m_alloc(global_arena, size);
 }
 
-void *vc_realloc(void *ptr, size_t size) {
+void *vc_ga_realloc(void *ptr, size_t size) {
     if (global_arena == NULL) {
         fprintf(stderr, "WARNING: Reallocating before the global arena is initialized. Creating a new arena.\n");
         global_arena = vc_arena_create(16 * K1);
