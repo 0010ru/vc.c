@@ -3,5 +3,7 @@
 CC=clang
 CFLAGS="-Wall -Wextra -Werror"
 
-$CC $CFLAGS -c -fPIC -o vcc.o vc.c
-$CC $CFLAGS -c -fPIC -o vcm.o vcm.c
+mkdir -p ./dst/
+
+$CC $CFLAGS -c -fPIC -o ./dst/vcc.o ./src/vc.c
+$CC $CFLAGS -c -fPIC -o ./dst/vcm.o ./src/vcm.c
