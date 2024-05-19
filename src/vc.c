@@ -95,5 +95,6 @@ void vc_run_event_loop(VC_Window *window) {
 
 void vc_window_destroy(VC_Window *window) {
     vc_window_destroy_x11(window);
+    free(window->display);
 }
 
