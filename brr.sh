@@ -3,4 +3,5 @@
 CC=clang
 CFLAGS="-Wall -Wextra -Werror"
 
-# TODO: Libraries building.
+$CC $CFLAGS -c -fPIC -o vcc.o vc.c
+$CC $CFLAGS -c -fPIC -o vcm.o vcm.c
