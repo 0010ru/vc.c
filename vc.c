@@ -143,7 +143,6 @@ void vc_run_event_loop(VC_Window *window) {
 void vc_window_destroy(VC_Window *window) {
     vc_window_destroy_x11(window);
     free(window->display);
-    free(window->params);
 }
 
 #endif // VC_C_IMPLEMENTATION
@@ -156,9 +155,10 @@ void vc_window_destroy(VC_Window *window) {
 #if 1
 int main() {
     VC_WindowParams params = {"My X11 Window", 800, 600};
-    VC_Window window = vc_create_window(&params);
-    vc_run_event_loop(&window);
-    vc_window_destroy(&window);
+        VC_Window window = vc_create_window(&params);
+            vc_run_event_loop(&window);
+        vc_window_destroy(&window);
+    free(params);
     return 0;
 }
 #endif
