@@ -1,6 +1,9 @@
 #define VC_C_IMPLEMENTATION
 
 // ------------------------------------
+// ------------------------------------
+// ------------------------------------
+// ------------------------------------
 
 #ifndef VC_C
 #define VC_C
@@ -38,6 +41,9 @@ void vc_window_destroy(VC_Window *window);
 
 #endif // VC_C
 
+// ------------------------------------
+// ------------------------------------
+// ------------------------------------
 // ------------------------------------
 
 #ifdef VC_C_IMPLEMENTATION
@@ -137,10 +143,14 @@ void vc_run_event_loop(VC_Window *window) {
 void vc_window_destroy(VC_Window *window) {
     vc_window_destroy_x11(window);
     free(window->display);
+    free(window->params);
 }
 
 #endif // VC_C_IMPLEMENTATION
 
+// ------------------------------------
+// ------------------------------------
+// ------------------------------------
 // ------------------------------------
 
 #if 1
