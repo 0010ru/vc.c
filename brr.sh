@@ -1,20 +1,25 @@
 #!/bin/sh -xe
 
-NAME=vc
-CC=clang
+NAME="vc"
+CC="clang"
 CFLAGS="-Wall -Wextra -Werror -ggdb -c -fPIC"
 LDFLAGS="-lX11"
-SOURCE_DIR=src
-INCLUDE_DIR=include
-DESTINATION_DIR=lib
-
-VCC_C=$SOURCE_DIR/vc_core.c
-VCC_O=$DESTINATION_DIR/vc_core.o
-VCM_C=$SOURCE_DIR/vc_arena.c
-VCM_O=$DESTINATION_DIR/vc_arena.o
+SOURCE_DIR="src"
+INCLUDE_DIR="include"
+DESTINATION_DIR="lib"
 
 mkdir -p $DESTINATION_DIR
-$CC $CFLAGS -o $VCC_O $VCC_C
-$CC $CFLAGS -o $VCM_O $VCM_C
-ar rcs $DESTINATION_DIR/lib$NAME.a $VCC_O $VCM_O
-rm $VCC_O $VCM_O
+
+VCL="core"
+VCL_C="${SOURCE_DIR}/${NAME}_${VCL}.c"
+VCL_O_0="${DESTINATION_DIR}/${NAME}_${VCL}.o"
+$CC $CFLAGS -o $VCL_O_0 $VCL_C
+
+VCL="arena"
+VCL_C="${SOURCE_DIR}/${NAME}_${VCL}.c"
+VCL_O_1="${DESTINATION_DIR}/${NAME}_${VCL}.o"
+$CC $CFLAGS -o $VCL_O_1 $VCL_C
+
+LIB_OUT="${DESTINATION_DIR}/lib${NAME}.a"
+ar rcs $LIB_OUT $VCL_O_0 $VCL_O_1
+rm $VCL_O_0 $VCL_O_1
