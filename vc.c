@@ -158,7 +158,6 @@ int main() {
         VC_Window window = vc_create_window(&params);
             vc_run_event_loop(&window);
         vc_window_destroy(&window);
-    free(params);
     return 0;
 }
 #endif
