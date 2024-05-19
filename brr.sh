@@ -2,7 +2,7 @@
 
 CC=clang
 CFLAGS="-Wall -Wextra -Werror"
-CLIBS="-I./src/ -lX11"
+CLIBS="-lX11"
 
 NAME=vcc
 SOURCE="vc.c"
