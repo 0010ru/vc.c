@@ -11,16 +11,12 @@ void handle_event(VC_Window *window, VC_EventType event_type)
 
 int main() {
     VC_Arena *arena = vc_arena_create(1024 * 1024);
-    VC_WindowParams *params = (VC_WindowParams *)vc_arena_alloc(arena, sizeof(VC_WindowParams));
 
-    params->width = 800;
-    params->height = 600;
-    params->name = "Main Window";
-
-    VC_Window window = vc_create_window(params, arena);
+    VC_WindowParams params = {"Main Window", 800, 600};
+    VC_Window window = vc_create_window(&params, arena);
     vc_run_event_loop(&window, handle_event);
+    
     vc_window_destroy(&window);
-
     vc_arena_destroy(arena);
     return 0;
 }
