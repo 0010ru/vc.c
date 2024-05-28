@@ -2,14 +2,15 @@
 #include <stdlib.h>
 
 #include "../include/vc_core.h"
+#include "../include/vc_arena.h"
 
 // --- Native Display ---
 
-NativeDisplay *vc_create_native_display(void) {
+NativeDisplay *vc_create_native_display() {
     NativeDisplay *native_display = XOpenDisplay(NULL);
     if (native_display == NULL) {
         fprintf(stderr, "ERROR: Cannot open X11 display!\n");
-        exit(EXIT_FAILURE);
+        return NULL;
     }
     return native_display;
 }
@@ -22,11 +23,11 @@ void setup_native_window(NativeDisplay *native_display, NativeWindow *native_win
     XMapWindow(native_display, *native_window);
 }
 
-NativeWindow *vc_create_native_window(NativeDisplay *native_display, VC_WindowParams *params) {
-    NativeWindow *native_window = (NativeWindow*)malloc(sizeof(NativeWindow)); 
+NativeWindow *vc_create_native_window(NativeDisplay *native_display, VC_WindowParams *params, VC_Arena *arena) {
+    NativeWindow *native_window = (NativeWindow *)vc_arena_alloc(arena, sizeof(NativeWindow));
     if (native_window == NULL) {
         fprintf(stderr, "ERROR: Failed to allocate memory for native window!\n");
-        exit(EXIT_FAILURE);
+        return NULL;
     }
 
     int screen = DefaultScreen(native_display);
@@ -44,8 +45,8 @@ NativeWindow *vc_create_native_window(NativeDisplay *native_display, VC_WindowPa
     if (*native_window == 0) {
         fprintf(stderr, "ERROR: Failed to create X11 window!\n");
         XCloseDisplay(native_display);
-        free(native_window);
-        exit(EXIT_FAILURE);
+        vc_m_free(arena, native_display);
+        return NULL;
     }
 
     setup_native_window(native_display, native_window, params);
@@ -55,25 +56,25 @@ NativeWindow *vc_create_native_window(NativeDisplay *native_display, VC_WindowPa
 
 // --- Window Creation ---
 
-VC_Window vc_create_window_x11(VC_WindowParams *params) {
+VC_Window vc_create_window_x11(VC_WindowParams *params, VC_Arena *arena) {
     NativeDisplay *native_display = vc_create_native_display();
-    NativeWindow *native_window = vc_create_native_window(native_display, params);
+    NativeWindow *native_window = vc_create_native_window(native_display, params, arena);
 
     VC_Display* display = (VC_Display*)malloc(sizeof(VC_Display)); 
     if (display == NULL) {
         fprintf(stderr, "ERROR: Failed to allocate memory for display!\n");
         XDestroyWindow(native_display, *native_window);
         XCloseDisplay(native_display);
-        free(native_window);
-        exit(EXIT_FAILURE);
+        vc_m_free(arena, native_window);
+        exit(EXIT_FAILURE);  // TODO: to retrurn
     }
     display->native_display = native_display;
 
     return (VC_Window) {display, *native_window, params};
 }
 
-VC_Window vc_create_window(VC_WindowParams *params) {
-    return vc_create_window_x11(params);
+VC_Window vc_create_window(VC_WindowParams *params, VC_Arena *arena) {
+    return vc_create_window_x11(params, arena);
 }
 
 // --- Event Handling ---

@@ -25,6 +25,7 @@ typedef struct FreeBlock {
 // --- Public API ---
 
 VC_Arena *vc_arena_create(size_t initial_capacity);
+void *vc_arena_alloc(VC_Arena *arena, size_t size);
 void vc_arena_destroy(VC_Arena *arena);
 void *vc_m_alloc(VC_Arena *arena, size_t size);
 void *vc_m_free(VC_Arena *arena, void *ptr);

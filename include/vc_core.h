@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <X11/Xlib.h>
+#include "../include/vc_arena.h"
 
 // --- Event Types ---
 
@@ -45,7 +46,7 @@ typedef void (*VC_F_HandleEvent)(VC_Window *window, VC_EventType event_type);
 
 // --- Public API ---
 
-VC_Window vc_create_window(VC_WindowParams *params);
+VC_Window vc_create_window(VC_WindowParams *params, VC_Arena *arena);
 VC_EventType vc_get_next_event(VC_Window *window);
 void vc_run_event_loop(VC_Window *window, VC_F_HandleEvent vc_handle_event);
 void vc_window_destroy(VC_Window *window);
